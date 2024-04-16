@@ -1,47 +1,73 @@
-import roman
+import re
 
 
 class RomanNumber:
     """
     Roman Number Class
     """
-
     def __init__(self, number):
         """
-        A method that defines an instance of a number record
-        :param number: a string with a Roman number entry or a number
+        A method that defines an instance of a Roman number record
+        :param number: a string with a Roman number entry
         """
-        if isinstance(number, int):
-            try:
-                self.rom_value = roman.toRoman(number)
+        if isinstance(number, int) or (isinstance(number, float) and number.is_integer()):
+            number = int(number)
+            if 0 < number < 4000:
                 self.int_value = number
-
-            except roman.OutOfRangeError:
-                print('mistake')
+                self.rom_value = self.roman_number()
+            else:
+                print('error')
                 self.int_value = None
-        else:
-            try:
-                self.int_value = roman.fromRoman(number)
-                self.rom_value = number
 
-            except roman.InvalidRomanNumeralError:
-                print('mistake')
+        elif isinstance(number, str):
+            if re.match('^(?=[MDCLXVI])M*(C[MD]|D?C{0,3})(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$', number) is None:
+                print('error')
                 self.rom_value = None
+            else:
+                self.rom_value = number
+                self.int_value = self.decimal_number()
+        else:
+            print('error')
+            self.rom_value = None
+            self.int_value = None
 
     def decimal_number(self):
         """
         A method that converts a Roman number to decimal
         :return: a number indicating the decimal equivalent
         """
-        return roman.fromRoman(self.rom_value)
+        roman_numerals = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}
+        result = 0
+        prev_value = 0
+        if self.rom_value is not None:
+            for letter in self.rom_value:
+                value = roman_numerals[letter]
+                if value > prev_value:
+                    result += value - 2 * prev_value
+                else:
+                    result += value
+                prev_value = value
+
+            return result
+        return self.rom_value
 
     def roman_number(self):
         """
         A method that translates into the Roman system
         :return: A string is the equivalent of a number in the Roman numeral system
         """
-        number = roman.toRoman(self.int_value)
-        return f'{number}'
+        if self.int_value is not None:
+            number = self.int_value
+            roman_numerals = {1000: 'M', 900: 'CM', 500: 'D', 400: 'CD', 100: 'C', 90: 'XC', 50: 'L', 40: 'XL', 10: 'X',
+                              9: 'IX', 5: 'V', 4: 'IV', 1: 'I'}
+            result = ''
+            for val, numeral in roman_numerals.items():
+                count = number // val
+                result += numeral * count
+                number -= val * count
+
+            return result
+        return None
 
     @staticmethod
     def is_roman(value):
@@ -50,13 +76,10 @@ class RomanNumber:
         :param value: the number that we are checking
         :return: logical expression
         """
-        try:
-            value_number = roman.fromRoman(value)
-
-        except roman.InvalidRomanNumeralError:
-            value_number = None
-
-        return isinstance(value_number, int)
+        if re.match('^(?=[MDCLXVI])M*(C[MD]|D?C{0,3})(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$', value) is None:
+            return False
+        else:
+            return True
 
     @staticmethod
     def is_int(value):
@@ -65,13 +88,11 @@ class RomanNumber:
         :param value: the number that we are checking
         :return: logical expression
         """
-        try:
-            value_number = roman.toRoman(value)
-
-        except roman.OutOfRangeError:
-            value_number = None
-
-        return isinstance(value_number, str)
+        if isinstance(value, int) or (isinstance(value, float) and value.is_integer()):
+            if 0 < value < 4000:
+                return True
+            else:
+                return False
 
     def __add__(self, other):
         """
@@ -80,13 +101,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value + other.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value + other.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __sub__(self, other):
         """
@@ -95,13 +114,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value - other.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value - other.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __mul__(self, other):
         """
@@ -110,13 +127,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value * other.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value * other.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __truediv__(self, other):
         """
@@ -125,18 +140,14 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = self.int_value / other.int_value
-                if result.is_integer():
-                    result = roman.toRoman(int(result))
-                    return RomanNumber(result)
-                else:
-                    return RomanNumber(None)
-
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value / other.int_value
+            if result.is_integer():
+                return RomanNumber(result)
+            else:
+                return RomanNumber(None)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __floordiv__(self, other):
         """
@@ -145,13 +156,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value // other.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value // other.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __mod__(self, other):
         """
@@ -160,13 +169,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(other, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value % other.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value % other.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __pow__(self, power, modulo=None):
         """
@@ -176,13 +183,11 @@ class RomanNumber:
         :return: the number with the result of the operation
         """
         if isinstance(power, RomanNumber):
-            try:
-                result = roman.toRoman(self.int_value ** power.int_value)
-                return RomanNumber(result)
-            except roman.OutOfRangeError:
-                print('mistake')
-                result = RomanNumber(None)
-                return result
+            result = self.int_value ** power.int_value
+            return RomanNumber(result)
+        else:
+            print('error')
+            return RomanNumber(None)
 
     def __str__(self):
         """
